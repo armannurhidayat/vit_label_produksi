@@ -1,0 +1,87 @@
+<odoo>
+    <data>
+
+        <record id="paperformat_print_label_produksi" model="report.paperformat" >
+            <field name="name">Label Produksi</field>
+            <field name="format">custom</field>
+            <field name="orientation">Landscape</field>
+            <field name="default" eval="False" />
+            <field name="dpi" eval="90" />
+            <field name="page_height">40</field>
+            <field name="page_width">15</field>
+            <field name="margin_top" eval="0" />
+            <field name="margin_right" eval="0" />
+            <field name="margin_bottom" eval="0" />
+            <field name="margin_left" eval="0" />
+            <field name="header_spacing" eval="0"/>
+            <field name="dpi" eval="90" />
+        </record>
+
+        <report
+            id="report_print_label_produksi"
+            string="Label Produksi"
+            model="stock.picking"
+            report_type="qweb-pdf"
+            paperformat="paperformat_print_label_produksi"
+            file="vit_label_produksi.file_report_label_produksi"
+            name="vit_label_produksi.file_report_label_produksi"
+        />
+
+        <template id="vit_label_produksi.file_report_label_produksi">
+            <t t-call="web.html_container">
+                <t t-call="vit_label_produksi.external_layout_label" >
+                    <t t-foreach="docs" t-as="doc">
+                        <t t-call="vit_label_produksi.file_report_document"/>
+                    </t>
+                </t>
+            </t>
+        </template>
+
+        <template id="vit_label_produksi.file_report_document">
+
+            <div class="page">
+              <t t-set="i" t-value="int(doc.product_id.heading)" />
+              <div class="row" t-foreach="range(i+2)" t-as="no">
+                <div class="col-xs-3">
+                  <div class="text-dark">
+                    <table style="border: 1px solid black; font-size:9px; margin:2px;">
+                      <tr>
+                        <td>
+                          <span style="margin-left:2px;" t-field="doc.move_line_ids.package_id"/><br/>
+                          <span style="margin-left:2px;" t-field="doc.product_id.default_code"/><br/>
+                          <span style="margin-left:2px;" t-field="doc.move_line_ids.lot_id"/>
+                        </td>
+                        <td><br/>
+                          <img t-att-src="'/report/barcode/?type=%s&amp;value=%s+%s+%s+%s&amp;width=%s&amp;height=%s' % ('QR', doc.move_line_ids.package_id.name, doc.product_id.default_code, doc.move_line_ids.lot_id.name, no+1, 50, 50)"/>
+                        </td>
+                        <td>
+                          <span t-esc="no+1"/><br/>
+                          <t t-if="doc.partner_id">
+                            <span t-field="doc.partner_id.ref"/>
+                          </t>
+                          <t t-else="">
+                          <span t-field="doc.move_ids_without_package.customer_id.partner_id.ref"/>
+                          </t>
+                          <t t-set="product_uom_qty" t-value="doc.move_ids_without_package.product_uom_qty"/>
+                          <t t-set="heading" t-value="doc.product_id.heading"/>
+                          <span t-esc="'{:,}'.format(product_uom_qty / heading)"/><span> Kg</span><br/>
+                          <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%m/%d/%Y')" />
+                        </td>
+                      </tr>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+        </template>
+
+        <template id="external_layout_label">
+            <div class="article o_report_layout_standard" t-att-data-oe-model="o and o._name" t-att-data-oe-id="o and o.id" t-att-data-oe-lang="o and o.env.context.get('lang')">
+                <t t-call="web.address_layout"/>
+                <t t-raw="0"/>
+            </div>
+        </template>
+
+    </data>
+</odoo>
